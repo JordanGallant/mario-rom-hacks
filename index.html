@@ -436,6 +436,19 @@ Status: Waiting for ROM...</pre>
           // Dispatch change event to trigger existing handlers
           fileInput.dispatchEvent(new Event('change', { bubbles: true }));
           
+          // IMPORTANT: Start audio after ROM is loaded
+          // This assumes you have a global audio handler instance
+          if (typeof audio !== 'undefined' && audio.ensureStarted) {
+            audio.ensureStarted();
+            logElement.textContent += '\n🔊 Audio system started';
+          }
+          
+          // If your emulator has a start/run method, call it here
+          // This depends on your main.js implementation
+          if (typeof snes !== 'undefined' && snes.start) {
+            snes.start();
+          }
+          
           statusIndicator.classList.add('active');
           logElement.textContent += '\n✅ ROM loaded successfully: ' + fileName;
           logElement.scrollTop = logElement.scrollHeight;
@@ -467,6 +480,11 @@ Status: Waiting for ROM...</pre>
       document.querySelectorAll('button').forEach(button => {
         button.addEventListener('click', function() {
           if (!this.disabled) {
+            // Ensure audio starts on any button click (user interaction)
+            if (typeof audio !== 'undefined' && audio.ensureStarted) {
+              audio.ensureStarted();
+            }
+            
             this.style.transform = 'scale(0.95)';
             setTimeout(() => {
               this.style.transform = '';

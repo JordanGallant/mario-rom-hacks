@@ -1,4 +1,3 @@
-
 function AudioHandler() {
 
   this.hasAudio = true;
@@ -19,37 +18,49 @@ function AudioHandler() {
     this.inputReadPos = 0;
 
     this.scriptNode = undefined;
+    this.isStarted = false; // Track if audio is started
   }
 
   this.resume = function() {
     // for Chrome autoplay policy
-    if(this.hasAudio) {
-      this.actx.resume();
+    if(this.hasAudio && this.actx.state === 'suspended') {
+      console.log("Resuming audio context...");
+      return this.actx.resume();
     }
+    return Promise.resolve();
   }
 
   this.start = function() {
-    if(this.hasAudio) {
+    if(this.hasAudio && !this.isStarted) {
+      console.log("Starting audio processor...");
+      
+      // First resume the context if suspended
+      this.resume().then(() => {
+        this.scriptNode = this.actx.createScriptProcessor(2048, 0, 2);
+        let that = this;
+        this.scriptNode.onaudioprocess = function(e) {
+          that.process(e);
+        }
 
-      this.scriptNode = this.actx.createScriptProcessor(2048, 0, 2);
-      let that = this;
-      this.scriptNode.onaudioprocess = function(e) {
-        that.process(e);
-      }
-
-      this.scriptNode.connect(this.actx.destination);
-
+        this.scriptNode.connect(this.actx.destination);
+        this.isStarted = true;
+        console.log("Audio processor started successfully");
+      }).catch(err => {
+        console.error("Failed to start audio:", err);
+      });
     }
   }
 
   this.stop = function() {
-    if(this.hasAudio) {
+    if(this.hasAudio && this.isStarted) {
+      console.log("Stopping audio processor...");
       if(this.scriptNode) {
         this.scriptNode.disconnect();
         this.scriptNode = undefined;
       }
       this.inputBufferPos = 0;
       this.inputReadPos = 0;
+      this.isStarted = false;
     }
   }
 
@@ -58,6 +69,7 @@ function AudioHandler() {
       // we overran the buffer
       // log("Audio buffer overran");
       this.inputReadPos = this.inputBufferPos - 2048;
+      if(this.inputReadPos < 0) this.inputReadPos = 0;
     }
     if(this.inputReadPos + 4096 < this.inputBufferPos) {
       // we underran the buffer
@@ -82,6 +94,13 @@ function AudioHandler() {
         this.inputBufferR[this.inputBufferPos & 0xfff] = valR;
         this.inputBufferPos++;
       }
+    }
+  }
+
+  // Add method to ensure audio starts on user interaction
+  this.ensureStarted = function() {
+    if(this.hasAudio && !this.isStarted) {
+      this.start();
     }
   }
 }

@@ -1,0 +1,486 @@
+<!doctype html>
+<html>
+<head>
+  <title>JavascriptSNES</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5em;
+      margin-bottom: 30px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      background: linear-gradient(45deg, #ff6b6b, #feca57);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+    }
+
+    .preload-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px;
+      border-radius: 25px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    #preloadedRoms {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+      outline: none;
+      min-width: 200px;
+    }
+
+    #preloadedRoms option {
+      background: #2c2c2c;
+      color: white;
+      padding: 8px;
+    }
+
+    #loadPreloaded {
+      padding: 8px 16px;
+      background: linear-gradient(45deg, #ff9a56, #ff6b95);
+      box-shadow: 0 4px 15px rgba(255, 154, 86, 0.4);
+      font-size: 12px;
+    }
+
+    #loadPreloaded:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 154, 86, 0.6);
+    }
+
+    #loadPreloaded:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: 0 4px 15px rgba(255, 154, 86, 0.2);
+    }
+
+    #rom {
+      position: absolute;
+      left: -9999px;
+    }
+
+    .file-input-label {
+      display: inline-block;
+      padding: 12px 24px;
+      background: linear-gradient(45deg, #4facfe, #00f2fe);
+      color: white;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+      border: none;
+    }
+
+    .file-input-label:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 172, 254, 0.6);
+    }
+
+    .checkbox-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    #ishirom {
+      width: 18px;
+      height: 18px;
+      accent-color: #ff6b6b;
+    }
+
+    .checkbox-wrapper label {
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    #pause {
+      background: linear-gradient(45deg, #f093fb, #f5576c);
+      box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+    }
+
+    #pause:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(240, 147, 251, 0.6);
+    }
+
+    #reset {
+      background: linear-gradient(45deg, #feca57, #ff9ff3);
+      box-shadow: 0 4px 15px rgba(254, 202, 87, 0.4);
+    }
+
+    #reset:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(254, 202, 87, 0.6);
+    }
+
+    #hardreset {
+      background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+      box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    }
+
+    #hardreset:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+    }
+
+    #runframe {
+      background: linear-gradient(45deg, #54a0ff, #2e86de);
+      box-shadow: 0 4px 15px rgba(84, 160, 255, 0.4);
+    }
+
+    #runframe:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(84, 160, 255, 0.6);
+    }
+
+    .game-area {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .canvas-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
+      padding: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    #output {
+      max-width: 1400px;
+      height: 1000px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+    }
+
+    .log-container {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    #log {
+      width: 100%;
+      height: 300px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 15px;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    #log::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #log::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    #log::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+    }
+
+    #log::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .game-area {
+        flex-direction: column;
+      }
+
+      .log-container {
+        flex: none;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+    }
+
+    .loading {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ff6b6b;
+      margin-left: 10px;
+      animation: blink 1s infinite;
+    }
+
+    .status-indicator.active {
+      background: #00ff00;
+      animation: none;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>JavascriptSNES <span class="status-indicator"></span></h1>
+    
+    <div class="controls">
+      <div class="file-input-wrapper">
+        <input id="rom" type="file" accept=".smc,.sfc,.zip">
+        <label for="rom" class="file-input-label">📁 Load ROM</label>
+      </div>
+      
+      <div class="preload-wrapper">
+        <select id="preloadedRoms">
+          <option value="">🎮 Select Preloaded ROM</option>
+          <option value="roms/ryu-world.sfc">🐉 Ryu World</option>
+          <option value="roms/grand-poo-world.sfc">💩 Grand Poo World</option>
+          <option value="roms/super-mario.sfc">Original Super Mario World</option>
+          <option value="roms/a-helping-hand.sfc">A Helping Hand</option>
+        </select>
+        <button id="loadPreloaded">🚀 Load Selected</button>
+      </div>
+      
+      <div class="checkbox-wrapper">
+        <input id="ishirom" type="checkbox">
+        <label for="ishirom">HiROM</label>
+      </div>
+      
+      <button id="pause">⏸️ Pause</button>
+      <button id="reset">🔄 Reset</button>
+      <button id="hardreset">⚡ Power Cycle</button>
+      <button id="runframe">▶️ Run 1 Frame</button>
+    </div>
+
+    <div class="game-area">
+      <div class="canvas-container">
+        <canvas id="output" width="256" height="224"></canvas>
+      </div>
+      
+      <div class="log-container">
+        <pre id="log">SNES Emulator Ready
+Load a ROM file to begin...
+
+Controls:
+- Load ROM: Select .smc, .sfc, or .zip file
+- Preloaded ROMs: Quick access to bundled games
+- HiROM: Check if ROM uses HiROM mapping
+- Pause: Pause/Resume emulation
+- Reset: Soft reset the system
+- Power Cycle: Hard reset (power off/on)
+- Run 1 Frame: Step through one frame
+
+Available Preloaded ROMs:
+🐉 Ryu World
+💩 Grand Poo World
+
+Status: Waiting for ROM...</pre>
+      </div>
+    </div>
+  </div>
+
+  <script src="lib/zip.js"></script>
+  <script src="lib/inflate.js"></script>
+  <script src="snes/cart.js"></script>
+  <script src="snes/dsp.js"></script>
+  <script src="snes/spc.js"></script>
+  <script src="snes/apu.js"></script>
+  <script src="snes/pipu.js"></script>
+  <script src="snes/cpu.js"></script>
+  <script src="snes/snes.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/trace.js"></script>
+  <script src="js/main.js"></script>
+
+  <script>
+    // Enhanced UI interactions
+    document.addEventListener('DOMContentLoaded', function() {
+      const statusIndicator = document.querySelector('.status-indicator');
+      const logElement = document.getElementById('log');
+      const preloadedSelect = document.getElementById('preloadedRoms');
+      const loadPreloadedBtn = document.getElementById('loadPreloaded');
+      
+      // Preloaded ROM loading
+      loadPreloadedBtn.addEventListener('click', async function() {
+        const selectedRom = preloadedSelect.value;
+        if (!selectedRom) {
+          logElement.textContent += '\n\nPlease select a ROM first!';
+          logElement.scrollTop = logElement.scrollHeight;
+          return;
+        }
+
+        try {
+          logElement.textContent += '\n\nLoading: ' + selectedRom + '...';
+          logElement.scrollTop = logElement.scrollHeight;
+          
+          const response = await fetch(selectedRom);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const arrayBuffer = await response.arrayBuffer();
+          const uint8Array = new Uint8Array(arrayBuffer);
+          
+          // Create a File object to simulate file input
+          const fileName = selectedRom.split('/').pop();
+          const file = new File([uint8Array], fileName, { type: 'application/octet-stream' });
+          
+          // Trigger the existing ROM loading logic
+          const fileInput = document.getElementById('rom');
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          fileInput.files = dt.files;
+          
+          // Dispatch change event to trigger existing handlers
+          fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+          
+          statusIndicator.classList.add('active');
+          logElement.textContent += '\n✅ ROM loaded successfully: ' + fileName;
+          logElement.scrollTop = logElement.scrollHeight;
+          
+        } catch (error) {
+          logElement.textContent += '\n❌ Error loading ROM: ' + error.message;
+          logElement.scrollTop = logElement.scrollHeight;
+        }
+      });
+
+      // Enable/disable load button based on selection
+      preloadedSelect.addEventListener('change', function() {
+        loadPreloadedBtn.disabled = !this.value;
+      });
+
+      // Initialize button state
+      loadPreloadedBtn.disabled = true;
+      
+      // File input handling
+      document.getElementById('rom').addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+          statusIndicator.classList.add('active');
+          logElement.textContent += '\n\nROM loaded: ' + e.target.files[0].name;
+          logElement.scrollTop = logElement.scrollHeight;
+        }
+      });
+
+      // Button click effects
+      document.querySelectorAll('button').forEach(button => {
+        button.addEventListener('click', function() {
+          if (!this.disabled) {
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+              this.style.transform = '';
+            }, 150);
+          }
+        });
+      });
+
+      // Log auto-scroll
+      const observer = new MutationObserver(() => {
+        logElement.scrollTop = logElement.scrollHeight;
+      });
+      observer.observe(logElement, { childList: true, subtree: true });
+    });
+  </script>
+</body>
+</html>

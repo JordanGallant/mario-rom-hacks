@@ -1,5 +1,6 @@
 <!doctype html>
 <html>
+
 <head>
   <title>JavascriptSNES</title>
   <style>
@@ -33,10 +34,22 @@
       font-size: 2.5em;
       margin-bottom: 30px;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-      background: linear-gradient(45deg, #ff6b6b, #feca57);
+      background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
+      background-size: 400% 100%;
+      animation: rainbow 8s linear infinite;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+    }
+
+    @keyframes rainbow {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      100% {
+        background-position: 100% 50%;
+      }
     }
 
     .controls {
@@ -296,9 +309,17 @@
     }
 
     @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.7; }
-      100% { opacity: 1; }
+      0% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.7;
+      }
+
+      100% {
+        opacity: 1;
+      }
     }
 
     .status-indicator {
@@ -317,21 +338,30 @@
     }
 
     @keyframes blink {
-      0%, 50% { opacity: 1; }
-      51%, 100% { opacity: 0.3; }
+
+      0%,
+      50% {
+        opacity: 1;
+      }
+
+      51%,
+      100% {
+        opacity: 0.3;
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <h1>JavascriptSNES <span class="status-indicator"></span></h1>
-    
+
     <div class="controls">
       <div class="file-input-wrapper">
         <input id="rom" type="file" accept=".smc,.sfc,.zip">
         <label for="rom" class="file-input-label">📁 Load ROM</label>
       </div>
-      
+
       <div class="preload-wrapper">
         <select id="preloadedRoms">
           <option value="">🎮 Select Preloaded ROM</option>
@@ -342,12 +372,12 @@
         </select>
         <button id="loadPreloaded">🚀 Load Selected</button>
       </div>
-      
+
       <div class="checkbox-wrapper">
         <input id="ishirom" type="checkbox">
         <label for="ishirom">HiROM</label>
       </div>
-      
+
       <button id="pause">⏸️ Pause</button>
       <button id="reset">🔄 Reset</button>
       <button id="hardreset">⚡ Power Cycle</button>
@@ -358,7 +388,7 @@
       <div class="canvas-container">
         <canvas id="output" width="256" height="224"></canvas>
       </div>
-      
+
       <div class="log-container">
         <pre id="log">SNES Emulator Ready
 Load a ROM file to begin...
@@ -396,14 +426,14 @@ Status: Waiting for ROM...</pre>
 
   <script>
     // Enhanced UI interactions
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const statusIndicator = document.querySelector('.status-indicator');
       const logElement = document.getElementById('log');
       const preloadedSelect = document.getElementById('preloadedRoms');
       const loadPreloadedBtn = document.getElementById('loadPreloaded');
-      
+
       // Preloaded ROM loading
-      loadPreloadedBtn.addEventListener('click', async function() {
+      loadPreloadedBtn.addEventListener('click', async function () {
         const selectedRom = preloadedSelect.value;
         if (!selectedRom) {
           logElement.textContent += '\n\nPlease select a ROM first!';
@@ -414,45 +444,45 @@ Status: Waiting for ROM...</pre>
         try {
           logElement.textContent += '\n\nLoading: ' + selectedRom + '...';
           logElement.scrollTop = logElement.scrollHeight;
-          
+
           const response = await fetch(selectedRom);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
-          
+
           const arrayBuffer = await response.arrayBuffer();
           const uint8Array = new Uint8Array(arrayBuffer);
-          
+
           // Create a File object to simulate file input
           const fileName = selectedRom.split('/').pop();
           const file = new File([uint8Array], fileName, { type: 'application/octet-stream' });
-          
+
           // Trigger the existing ROM loading logic
           const fileInput = document.getElementById('rom');
           const dt = new DataTransfer();
           dt.items.add(file);
           fileInput.files = dt.files;
-          
+
           // Dispatch change event to trigger existing handlers
           fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-          
+
           // IMPORTANT: Start audio after ROM is loaded
           // This assumes you have a global audio handler instance
           if (typeof audio !== 'undefined' && audio.ensureStarted) {
             audio.ensureStarted();
             logElement.textContent += '\n🔊 Audio system started';
           }
-          
+
           // If your emulator has a start/run method, call it here
           // This depends on your main.js implementation
           if (typeof snes !== 'undefined' && snes.start) {
             snes.start();
           }
-          
+
           statusIndicator.classList.add('active');
           logElement.textContent += '\n✅ ROM loaded successfully: ' + fileName;
           logElement.scrollTop = logElement.scrollHeight;
-          
+
         } catch (error) {
           logElement.textContent += '\n❌ Error loading ROM: ' + error.message;
           logElement.scrollTop = logElement.scrollHeight;
@@ -460,15 +490,15 @@ Status: Waiting for ROM...</pre>
       });
 
       // Enable/disable load button based on selection
-      preloadedSelect.addEventListener('change', function() {
+      preloadedSelect.addEventListener('change', function () {
         loadPreloadedBtn.disabled = !this.value;
       });
 
       // Initialize button state
       loadPreloadedBtn.disabled = true;
-      
+
       // File input handling
-      document.getElementById('rom').addEventListener('change', function(e) {
+      document.getElementById('rom').addEventListener('change', function (e) {
         if (e.target.files.length > 0) {
           statusIndicator.classList.add('active');
           logElement.textContent += '\n\nROM loaded: ' + e.target.files[0].name;
@@ -478,13 +508,13 @@ Status: Waiting for ROM...</pre>
 
       // Button click effects
       document.querySelectorAll('button').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
           if (!this.disabled) {
             // Ensure audio starts on any button click (user interaction)
             if (typeof audio !== 'undefined' && audio.ensureStarted) {
               audio.ensureStarted();
             }
-            
+
             this.style.transform = 'scale(0.95)';
             setTimeout(() => {
               this.style.transform = '';
@@ -501,4 +531,5 @@ Status: Waiting for ROM...</pre>
     });
   </script>
 </body>
+
 </html>
